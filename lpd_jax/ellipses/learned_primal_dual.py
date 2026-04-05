@@ -19,9 +19,8 @@ from lpd_jax.tomo.opnorm import power_method_opnorm
 
 
 def main() -> None:
-  """
-  Serves as the main execution loop for running LPD on generated data dynamically.
-  """
+  """Main execution loop for running LPD on generated data dynamically."""
+
   print("Initializing Geometry.")
   geom = make_parallel_beam_geometry(
     img_shape=(128, 128), img_extent=(128.0, 128.0), num_angles=30
