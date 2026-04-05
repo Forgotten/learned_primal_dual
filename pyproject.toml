@@ -10,23 +10,32 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
-    { name = "Leonardo Zepeda-Núñez", email = "lzepeda@melix.org" }
+  { name = "Leonardo Zepeda-Núñez", email = "lzepeda@melix.org" }
 ]
 dependencies = [
-    "jax>=0.4.0",
-    "jaxlib>=0.4.0",
-    "flax>=0.7.0",
-    "optax>=0.1.0",
-    "numpy>=1.20.0",
-    "matplotlib>=3.5.0"
+  "jax>=0.4.0",
+  "jaxlib>=0.4.0",
+  "flax>=0.7.0",
+  "optax>=0.1.0",
+  "numpy>=1.20.0",
+  "matplotlib>=3.5.0"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
-    "black>=23.0",
-    "flake8>=6.0"
+  "pytest>=7.0",
+  "ruff>=0.1.0"
 ]
 
 [tool.setuptools.packages.find]
 include = ["lpd_jax*"]
+
+[tool.ruff]
+line-length = 88
+indent-width = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

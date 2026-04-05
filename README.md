@@ -31,7 +31,7 @@ cd learned_primal_dual
 pip install .
 ```
 
-To install development dependencies (like `pytest`, `black`):
+To install development dependencies (like `pytest`, `ruff`):
 ```bash
 pip install .[dev]
 ```
