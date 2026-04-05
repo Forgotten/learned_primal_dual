@@ -11,7 +11,7 @@
 # If you are running this in Google Colab, you can install the `lpd_jax` library by cloning the repo:
 # ```bash
 # !git clone https://github.com/lzepedanunez/learned_primal_dual.git
-# %pip install -e ./learned_primal_dual
+# !pip install -e ./learned_primal_dual
 # ```
 
 # %%
@@ -55,8 +55,11 @@ print(f"Calculated Operator Norm: {opnorm:.4f}")
 
 # Define normalized forward operator
 _fwd_op = make_batched_radon_forward(geom)
+
+
 def fwd_op(x: jnp.ndarray) -> jnp.ndarray:
   return _fwd_op(x) / opnorm
+
 
 # %% [markdown]
 # ## 2. Model Initialization
@@ -73,26 +76,60 @@ state = create_train_state(init_rng, model, dummy_y, init_lr=1e-3, decay_steps=1
 train_step = make_train_step()
 
 # %% [markdown]
-# ## 3. Training Loop
-# We train for a short sequence (1001 steps) using generated random ellipse batches of size 1.
+# ## 3. Dataset Generation
+# We pre-generate 1000 training samples (each with batch_size=8) so the
+# training loop can iterate through them without per-step data generation overhead.
 
 # %%
-print("Starting Training...")
-for step in range(1, 1001):
+N_SAMPLES = 1000
+BATCH_SIZE = 8
+
+print(f"Pre-generating {N_SAMPLES} training samples (batch_size={BATCH_SIZE})...")
+dataset_y = []
+dataset_x = []
+for i in range(N_SAMPLES):
   rng, batch_rng = jax.random.split(rng)
   seed = int(jax.random.randint(batch_rng, (), 0, 1000000))
-  
   y_batch, x_true_batch = generate_batch(
-    geom, batch_size=1, rng_seed=seed, fwd_op=fwd_op
+    geom, batch_size=BATCH_SIZE, rng_seed=seed, fwd_op=fwd_op
   )
-  
-  state, loss = train_step(state, y_batch, x_true_batch)
-  
-  if step % 100 == 0:
-    print(f"Step {step:4d} | MSE Loss: {float(loss):.5f}")
+  dataset_y.append(y_batch)
+  dataset_x.append(x_true_batch)
+  if (i + 1) % 200 == 0:
+    print(f"  Generated {i + 1}/{N_SAMPLES} samples.")
+
+print("Dataset ready.")
 
 # %% [markdown]
-# ## 4. Evaluation and Visualization
+# ## 4. Training Loop
+# We iterate over the pre-generated dataset for several epochs, shuffling
+# the sample order each epoch.
+
+# %%
+N_EPOCHS = 10
+
+print(f"Starting Training ({N_EPOCHS} epochs, {N_SAMPLES} samples each)...")
+global_step = 0
+for epoch in range(1, N_EPOCHS + 1):
+  # Shuffle dataset order each epoch.
+  rng, perm_rng = jax.random.split(rng)
+  perm = jax.random.permutation(perm_rng, N_SAMPLES)
+
+  epoch_loss = 0.0
+  for i in range(N_SAMPLES):
+    idx = int(perm[i])
+    y_batch = dataset_y[idx]
+    x_true_batch = dataset_x[idx]
+
+    state, loss = train_step(state, y_batch, x_true_batch)
+    epoch_loss += float(loss)
+    global_step += 1
+
+  avg_loss = epoch_loss / N_SAMPLES
+  print(f"Epoch {epoch:2d}/{N_EPOCHS} | Avg MSE Loss: {avg_loss:.5f}")
+
+# %% [markdown]
+# ## 5. Evaluation and Visualization
 # Finally, we generate a validation sample and compare the ground truth phantom with the LPD reconstruction.
 
 # %%
@@ -110,7 +147,7 @@ print(f"Validation PSNR: {float(psnr_val):.2f} dB")
 
 # %% [markdown]
 # ### Comparison Plots
-# We visualize the original phantom, the sparse-view sinogram (which is what the model sees), 
+# We visualize the original phantom, the sparse-view sinogram (which is what the model sees),
 # and the reconstructed result.
 
 # %%

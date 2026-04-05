@@ -45,8 +45,7 @@ def create_train_state(
 
 
 def make_train_step() -> Callable:
-  """
-  Returns a jitted train step function.
+  """Returns a jitted train step function.
 
   Returns:
     Compiled executable logic flow targeting parameters sequentially.
@@ -58,8 +57,7 @@ def make_train_step() -> Callable:
     y_batch: jnp.ndarray,
     x_true_batch: jnp.ndarray,
   ) -> tuple[train_state.TrainState, jnp.ndarray]:
-    """
-    Executes mapping updates step using internal closures.
+    """Executes mapping updates step using internal closures.
 
     Args:
       state: Extraced sequence step parameters container.
