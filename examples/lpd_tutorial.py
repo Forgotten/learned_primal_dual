@@ -8,14 +8,15 @@
 # - High-quality visualization of sinograms and reconstructions.
 #
 # ### Installation (Colab)
-# If you are running this in Google Colab, uncomment and run the cell below to install the `lpd_jax` library.
+# If you are running this in Google Colab, you can install the `lpd_jax` library by cloning the repo:
+# ```bash
+# !git clone https://github.com/lzepedanunez/learned_primal_dual.git
+# %pip install -e ./learned_primal_dual
+# ```
 
 # %%
-# !pip install git+https://github.com/lzepedanunez/learned_primal_dual.git
-# Or for local development:
-# !pip install -e .
-
-# %%
+import os
+import sys
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
@@ -54,17 +55,12 @@ print(f"Calculated Operator Norm: {opnorm:.4f}")
 
 # Define normalized forward operator
 _fwd_op = make_batched_radon_forward(geom)
-
-
 def fwd_op(x: jnp.ndarray) -> jnp.ndarray:
   return _fwd_op(x) / opnorm
 
-
 # %% [markdown]
 # ## 2. Model Initialization
-# We initialize the `LearnedPrimalDual` model with 10 iterations.
-# Each iteration "unrolls" a primal mapping and a dual mapping, alternating
-#  between image space and measurement space.
+# We initialize the `LearnedPrimalDual` model with 10 iterations. Each iteration "unrolls" a primal mapping and a dual mapping, alternating between image space and measurement space.
 
 # %%
 model = LearnedPrimalDual(geometry=geom, n_iter=10, op_norm=opnorm)
@@ -85,13 +81,13 @@ print("Starting Training...")
 for step in range(1, 1001):
   rng, batch_rng = jax.random.split(rng)
   seed = int(jax.random.randint(batch_rng, (), 0, 1000000))
-
+  
   y_batch, x_true_batch = generate_batch(
     geom, batch_size=1, rng_seed=seed, fwd_op=fwd_op
   )
-
+  
   state, loss = train_step(state, y_batch, x_true_batch)
-
+  
   if step % 100 == 0:
     print(f"Step {step:4d} | MSE Loss: {float(loss):.5f}")
 
@@ -114,7 +110,7 @@ print(f"Validation PSNR: {float(psnr_val):.2f} dB")
 
 # %% [markdown]
 # ### Comparison Plots
-# We visualize the original phantom, the sparse-view sinogram (which is what the model sees),
+# We visualize the original phantom, the sparse-view sinogram (which is what the model sees), 
 # and the reconstructed result.
 
 # %%
